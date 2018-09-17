@@ -21,10 +21,11 @@ string computeSHAforChunk(string str){
    for(int i = 0; i < SHA_DIGEST_LENGTH; i++){
         sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);
 	}
+	retHash = mdString;
 	
-	for(int i=0; i<20; i++){
+	/*for(int i=0; i<20; i++){
 		retHash += mdString[i];
-	}
+	}*/
 	//cout<<retHash<<endl;
 	return retHash;
 }
@@ -40,12 +41,13 @@ string computeSHAforChunk(string str){
 	}
 	len = 0;
 	while ((ch = fgetc(srcFile)) != EOF){
-		if(len < 512){
+		if(len < 524288){//
 			chunk += ch;
 			//buffer[len] = ch;
 			len++;
 		}else{
 			chunkHash = computeSHAforChunk(chunk);
+			chunkHash = chunkHash.substr(0,20);
 			totalHash.append(chunkHash);
 			len = 0;
 			i++;
@@ -54,14 +56,17 @@ string computeSHAforChunk(string str){
 	}
 	if(len>0 && ch == EOF){
 		chunkHash = computeSHAforChunk(chunk);
+		chunkHash = chunkHash.substr(0,20);
 		totalHash.append(chunkHash);
 		chunk.clear();
 	}
-	//cout<<"Total Chunks are: "<<i<<endl;
+	cout<<"Total Chunks are: "<<i<<endl;
 	return totalHash;
  }
  
- int prepareMTorrent(string ip1, int port1, string ip2, int port2, string dataFilePath, string mtFilePath){
+ int prepareMTorrent(string ip1, int port1, string ip2, int port2, string dataFilePath){ //, string mtFilePath
+	string mtFilePath = dataFilePath;
+	mtFilePath.append(".mtorrent");
 	FILE *tFile = fopen((char *)mtFilePath.c_str(), "w");
 	if(tFile == NULL){
 		cout<<"Unable to open file "<<mtFilePath<<endl;
@@ -85,12 +90,12 @@ string computeSHAforChunk(string str){
  }
  
  int main(){
-	string dataFilePath = "/home/suraj/Desktop/OS/Assignment2/datafile1.txt";	
-	string mtFilePath = "/home/suraj/Desktop/OS/Assignment2/datafile1.mtorrent";
+	string dataFilePath = "/home/suraj/Desktop/OS/Assignment2/BloodDonationChitta.png";	
+	//string mtFilePath = "/home/suraj/Desktop/OS/Assignment2/datafile1.mtorrent";
 	/*struct stat filestat;
 	stat((char *)dataFilePath.c_str(), &filestat);
 	long double fileSize = filestat.st_size;*/
-	int rv = prepareMTorrent("127.0.0.1", 80, "127.0.0.2", 80, dataFilePath, mtFilePath);
+	int rv = prepareMTorrent("127.0.0.1", 80, "127.0.0.2", 80, dataFilePath);//, mtFilePath);
 	if(rv == 0){
 		cout<<".mtorrent file successfully prepared"<<endl;
 	}else{
