@@ -12,35 +12,47 @@ using namespace std;
 
 typedef struct entry{
   string hash;
-  string filename;
+  string fileName;
   string clientIP;
   int clientPort;
 }tEntry;
 
-vector <pair <string, string> > dataVec;
+//vector <pair <string, string> > dataVec;
+
+vector <tEntry> dataVec;
 
 vector<string> getSeederListForHash(string fileHash){
 	vector<string> seederList;
-	for(auto entry : dataVec){
-		if(entry.first == fileHash){
-			seederList.push_back(entry.second);
+	string url;
+	for(auto it : dataVec){
+		if(it.hash == fileHash){
+			url.append(it.clientIP);
+			url.append(":");
+			url.append(to_string(it.clientPort));
+			seederList.push_back(url);
 		}
 	}
 	return seederList;
 }
 
-int addSeederIntoList(string seederIP, string seederPort, string fileHash){
+int addSeederIntoList(string fileName, string seederIP, int seederPort, string fileHash){
 	string url;
-	url.append(seederIP);
+	tEntry entry;
+	entry.fileName = fileName;
+	entry.hash = fileHash;
+	entry.clientIP = seederIP;
+	entry.clientPort = seederPort;
+	/*url.append(seederIP);
 	url.append(":");
 	url.append(seederPort);
-	dataVec.push_back(make_pair(fileHash, url));
+	dataVec.push_back(make_pair(fileHash, url));*/
+	dataVec.push_back(entry);
 	return 0;
 }
 
-int deleteSeederFromList(string seederURL){
+int deleteSeederFromList(string seederIP, int seederPort){
 	for(auto entry = dataVec.begin(); entry != dataVec.end(); ++entry){
-		if((*entry).second == seederURL){
+		if( (*entry).clientIP == seederIP  && (*entry).clientPort == seederPort){
 			dataVec.erase(entry);
 		}
 	}
@@ -49,7 +61,7 @@ int deleteSeederFromList(string seederURL){
 
 void printDataVec(){
 	for(auto it : dataVec){
-		cout<<it.first<<"\t"<<it.second<<endl;
+		cout<<it.hash<<"\t"<<it.fileName<<"\t"<<it.clientIP<<"\t"<<it.clientPort<<endl;
 	}
 }
 
