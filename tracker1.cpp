@@ -6,7 +6,7 @@
 #include <vector>
 #include <algorithm>
 #include "connection.h"
-
+#define MAX 515 
 
 using namespace std;
 
@@ -20,6 +20,36 @@ typedef struct entry{
 //vector <pair <string, string> > dataVec;
 
 vector <tEntry> dataVec;
+
+void serverChat(int sockfd) { 
+    char buff[MAX]; 
+    int n; 
+    // infinite loop for chat 
+    while (true) { 
+        bzero(buff, MAX); 
+  
+        // read the message from client and copy it in buffer 
+        read(sockfd, buff, sizeof(buff)); 
+        // print buffer which contains the client contents 
+        printf("From client: %s\t To client : ", buff); 
+        bzero(buff, MAX); 
+        n = 0; 
+        // copy server message in the buffer 
+        while ((buff[n++] = getchar()) != '\n') 
+		;
+		//cin>>msg;
+  
+        // and send that buffer to client 
+        write(sockfd, buff, sizeof(buff)); 
+  
+        // if msg contains "Exit" then server exit and chat ended. 
+        if (strncmp("exit", buff, 4) == 0) { 
+            printf("Server Exit...\n"); 
+            break; 
+        } 
+    } 
+}  
+
 
 vector<string> getSeederListForHash(string fileHash){
 	vector<string> seederList;
@@ -59,7 +89,53 @@ int deleteSeederFromList(string seederIP, int seederPort){
 	return 0;
 }
 
-void printDataVec(){
+tEntry prepareStructFromLine(char * line){
+	tEntry entry;
+	char *token;
+	token = strtok (line," ");
+		int i=0;
+		while (token != NULL && i<=3){
+			i++;
+			if(i ==1){
+				entry.fileName = token;
+			}
+			if(i ==2){
+				entry.hash = token;
+			}
+			if(i == 3){
+				string url = token;
+				int pos = url.find(":");
+				entry.clientIP = url.substr(0, pos);
+				 entry.clientPort = stoi(url.substr(pos+1));
+			}
+			token = strtok (NULL, " ");
+		}
+	return entry;
+}
+
+int loadSeederList(string filePath){
+	tEntry entry;
+	char * line = NULL;
+    size_t len = 0;
+    int size;
+	FILE *srcFile = fopen((char *)filePath.c_str(), "rb");
+	if(srcFile == NULL){
+		cout<<"Unable to open file "<<filePath<<endl;
+		return -1;
+	}
+	while ((size = getline(&line, &len, srcFile)) != -1) {
+		entry = prepareStructFromLine(line);
+		dataVec.push_back(entry);
+    }
+    fclose(srcFile);
+	return 0;
+}
+
+int printDataVec(){
+	if(dataVec.size() == 0){
+		cout<<"Data vector is currently empty.."<<endl;
+		return -1;
+	}
 	for(auto it : dataVec){
 		cout<<it.hash<<"\t"<<it.fileName<<"\t"<<it.clientIP<<"\t"<<it.clientPort<<endl;
 	}
@@ -71,31 +147,28 @@ void printVec(vector<string> vec){
 	}
 }
 
-int main(){
+void clientHandler(){
+	int connect[2];
+	getTCPWriteConnection(connect);
+	int sockfd, connfd;
+	sockfd = connect[0];
+	connfd = connect[1];
+    serverChat(connfd); 
+    close(sockfd);
+}
+
+int main(int argc, char **argv){
+	if(argc < 5) {
+		cout<<"Insufficient arguements..\n"<<endl;
+		exit(1); 
+	}
+	string thisTackerURL = argv[1];
+	string otherTackerURL = argv[2];
+	string seederFile = argv[3];
+	string logFile = argv[4];
+	loadSeederList(seederFile);
+	
+	printDataVec();
 	
 	return 0;
 }
-
-/*
-dataVec.push_back(make_pair("487accf534abd342fe54", "1.2.3.14:8080"));
-	dataVec.push_back(make_pair("487accf5242342fe54cb", "1.2.3.62:1979"));
-	dataVec.push_back(make_pair("487accf534abd342fe54", "1.2.3.10:1500"));
-	dataVec.push_back(make_pair("487accf545565d342fe5", "1.2.3.78:2045"));
-	dataVec.push_back(make_pair("487accf55647bff2fe5a", "1.2.3.17:4859"));
-	dataVec.push_back(make_pair("487accf5242342fe54cb", "1.2.3.15:1020"));
-	dataVec.push_back(make_pair("487accf545565d342fe5", "1.2.3.60:7845"));
-	dataVec.push_back(make_pair("487accf534abd342fe54", "1.2.3.48:8010"));
-
-	cout<<"Old data vec"<<endl;
-	printDataVec();
-	//vector<string> seeders = getSeederListForHash("487accf534abd342fe54");
-	//printVec(seeders);
-
-	cout<<"data vec after adding a seeder"<<endl;
-	addSeederIntoList("1.2.3.56", "1515", "415accf53df8d342fe5c");
-	printDataVec();
-
-	cout<<"data vec after deleting a seeder"<<endl;
-	deleteSeederFromList("1.2.3.60:7845");
-	printDataVec();
-*/
