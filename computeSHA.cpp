@@ -13,10 +13,8 @@ string computeSHAforChunk(string str){
    for(int i = 0; i < SHA_DIGEST_LENGTH; i++){
         sprintf(&mdString[i*2], "%02x", (unsigned int)digest[i]);
 	}
+	retHash = mdString;
 	
-	for(int i=0; i<20; i++){
-		retHash += mdString[i];
-	}
 	//cout<<retHash<<endl;
 	return retHash;
 }
@@ -25,19 +23,20 @@ string computeSHAforChunk(string str){
 	string chunk, totalHash, chunkHash;
 	int len,i=1;
 	char ch;//, buffer[MAX];
-	FILE *srcFile = fopen((char *)filename.c_str(), "r");
+	FILE *srcFile = fopen((char *)filename.c_str(), "rb");
 	if(srcFile == NULL){
 		cout<<"Unable to open file "<<filename<<endl;
 		return NULL;
 	}
 	len = 0;
 	while ((ch = fgetc(srcFile)) != EOF){
-		if(len < 512){
+		if(len < 524288){//
 			chunk += ch;
 			//buffer[len] = ch;
 			len++;
 		}else{
 			chunkHash = computeSHAforChunk(chunk);
+			chunkHash = chunkHash.substr(0,20);
 			totalHash.append(chunkHash);
 			len = 0;
 			i++;
@@ -46,17 +45,18 @@ string computeSHAforChunk(string str){
 	}
 	if(len>0 && ch == EOF){
 		chunkHash = computeSHAforChunk(chunk);
+		chunkHash = chunkHash.substr(0,20);
 		totalHash.append(chunkHash);
 		chunk.clear();
 	}
-	//cout<<"Total Chunks are: "<<i<<endl;
+	cout<<"Total Chunks are: "<<i<<endl;
 	return totalHash;
  }
  
-int main(){
+/*int main(){
 	string totalHash;
     totalHash = computeSHAforFile("/home/suraj/Desktop/OS/Assignment2/datafile1.txt");
 	cout<<"Total hash of the file is: "<<totalHash<<endl;
 	cout<<"Hash of the file hash is: "<<computeSHAforChunk(totalHash)<<endl;
     return 0;
-}
+}*/
