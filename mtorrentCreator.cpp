@@ -1,13 +1,8 @@
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <iostream>
-#include <string>
-#include <sys/stat.h> 
-#include <openssl/sha.h>
+#include "mtorrentCreator.h"
+#include "computeSHA.h"
  
 using namespace std;
- 
+ /*
 string computeSHAforChunk(string str){
 	unsigned char digest[SHA_DIGEST_LENGTH];
 	string retHash;
@@ -23,9 +18,6 @@ string computeSHAforChunk(string str){
 	}
 	retHash = mdString;
 	
-	/*for(int i=0; i<20; i++){
-		retHash += mdString[i];
-	}*/
 	//cout<<retHash<<endl;
 	return retHash;
 }
@@ -64,6 +56,8 @@ string computeSHAforChunk(string str){
 	return totalHash;
  }
  
+ */
+ 
  int prepareMTorrent(string ip1, int port1, string ip2, int port2, string dataFilePath){ //, string mtFilePath
 	string mtFilePath = dataFilePath;
 	mtFilePath.append(".mtorrent");
@@ -90,7 +84,7 @@ string computeSHAforChunk(string str){
  }
  
  int main(){
-	string dataFilePath = "/home/suraj/Desktop/OS/Assignment2/BloodDonationChitta.png";	
+	string dataFilePath = "/home/suraj/Desktop/OS/Assignment2/BhaagMilkhaBhaag.mkv";	
 	//string mtFilePath = "/home/suraj/Desktop/OS/Assignment2/datafile1.mtorrent";
 	/*struct stat filestat;
 	stat((char *)dataFilePath.c_str(), &filestat);
