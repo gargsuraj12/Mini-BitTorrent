@@ -1,0 +1,17 @@
+//Commands format from client to tracker
+
+1. to add a file to traker
+>> addfile <filename> <hash of total hash of the file> <clientIP:clientPort>
+eg: addfile file7.mkv 9ahna3ee5e6bfb0d325566579520b2c124894edf 1.2.3.50:7842
+
+2. to remove a perticular file for a client from seeder
+>> removefile <hash of total hash of the file> <clientIP:clientPort>
+eg: removefile fa39a3ee5e6b4b0d32556f579520b2c1245b4edf 1.2.3.19:5657
+
+3. to remove a seeder from list if it goes down or doesn't want to seed anymore
+>> removeseeder <seederIP:seederPort>
+eg: removeseeder 1.2.3.19:5657
+
+4. to get seeder list for a file hash
+>> getseederlist <hash of total hash of the file>
+eg: getseederlist ac4da3ee5e6b4b0d32556f579522b2c1245b4edf

@@ -27,7 +27,18 @@ typedef struct entry{
 vector <tEntry> dataVec;
 
 int updateSeederListFile(string filePath){
-	
+	FILE *fp = fopen((char *)filePath.c_str(), "wb");
+	if(fp == NULL){
+		cout<<"Unable to open file "<<filePath<<endl;
+		return -1;
+	}
+	string line;	
+	for(tEntry entry : dataVec){
+		line.clear();
+		line = entry.fileName+" "+entry.hash+" "+entry.clientIP+":"+to_string(entry.clientPort)+"\n";
+		fprintf(fp, "%s", (char *)line.c_str());
+	}
+	fclose(fp);
 	return 0;
 }
 
@@ -161,7 +172,7 @@ void printVec(vector<string> vec){
 	}
 }
 
-string processCommand(vector<string> msgVec){
+string processCommand(vector<string> msgVec, string seederFile){
 	string ack,url,ip;
 	int pos;
 	string command = msgVec[0];
@@ -174,6 +185,7 @@ string processCommand(vector<string> msgVec){
 		int port = stoi(url.substr(pos+1));
 		status = addFileIntoList(msgVec[1], ip, port, msgVec[2]);
 		if(status == 0){
+			updateSeederListFile(seederFile);
 			ack = "File added successfully at tracker...";
 		}else{
 			ack = "unable to add file at tracker...";
@@ -186,6 +198,7 @@ string processCommand(vector<string> msgVec){
 		int port = stoi(url.substr(pos+1));
 		status = removeFileFromList(msgVec[1], ip, port);
 		if(status == 0){
+			updateSeederListFile(seederFile);
 			ack = "File removed successfully from tracker...";
 		}else{
 			ack = "unable to remove file from tracker...";
@@ -198,6 +211,7 @@ string processCommand(vector<string> msgVec){
 		int port = stoi(url.substr(pos+1));
 		status = removeSeederFromList(ip, port);
 		if(status == 0){
+			updateSeederListFile(seederFile);
 			ack = "seeder removed successfully from tracker...";
 		}else{
 			ack = "unable to remove seeder from tracker...";
@@ -218,7 +232,7 @@ string processCommand(vector<string> msgVec){
 }
 
 // Function designed for chat between client and server. 
-void serverChat(int connfd) { 
+void serverChat(int connfd, string seederFile) { 
     char buff[MAX]; 
     int n; 
 	string command, message,ack;
@@ -234,7 +248,7 @@ void serverChat(int connfd) {
 		message = buff;
 		msgVec = splitLine(message, " ");
 		if(!msgVec.empty()){
-			ack = processCommand(msgVec);
+			ack = processCommand(msgVec, seederFile);
 			printDataVec();
 		}
 		bzero(buff, MAX); 
@@ -325,7 +339,7 @@ int main(int argc, char **argv) {
 	int sockfd, connfd;
 	sockfd = connection[0];
 	connfd = connection[1];
-    serverChat(connfd); 
+    serverChat(connfd, seederFile); 
     close(sockfd);
 	
 	return 0;
