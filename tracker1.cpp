@@ -26,17 +26,25 @@ typedef struct entry{
 
 vector <tEntry> dataVec;
 
-vector<string> getSeederListForHash(string fileHash){
-	vector<string> seederList;
+int updateSeederListFile(string filePath){
+	
+	return 0;
+}
+
+string getSeederListForHash(string fileHash){
+	string seederList;
 	string url;
 	for(auto it : dataVec){
 		if(it.hash == fileHash){
 			url.append(it.clientIP);
 			url.append(":");
 			url.append(to_string(it.clientPort));
-			seederList.push_back(url);
+			seederList.append(url);
+			url.clear();
+			seederList.append("$");
 		}
 	}
+	seederList = seederList.substr(0, seederList.length()-1);
 	return seederList;
 }
 
@@ -56,9 +64,12 @@ int addFileIntoList(string fileName, string seederIP, int seederPort, string fil
 }
 
 int removeSeederFromList(string seederIP, int seederPort){
-	for(auto entry = dataVec.begin(); entry != dataVec.end(); ++entry){
-		if( (*entry).clientIP == seederIP  && (*entry).clientPort == seederPort){
-			dataVec.erase(entry);
+	int size = dataVec.size();
+	tEntry entry;
+	for(int i =0; i<size; i++){
+		entry = dataVec[i];
+		if( entry.clientIP == seederIP  && entry.clientPort == seederPort){
+			dataVec.erase(dataVec.begin()+i);
 		}
 	}
 	return 0;
@@ -167,24 +178,39 @@ string processCommand(vector<string> msgVec){
 		}else{
 			ack = "unable to add file at tracker...";
 		}
-	} else if(command == "removefile"){
+	} 
+	else if(command == "removefile"){
 		url = msgVec[2];
 		pos = url.find(":");
 		ip = url.substr(0, pos);
 		int port = stoi(url.substr(pos+1));
-		cout<<"ip is:"<<ip << " and port is:"<<port<<endl;
 		status = removeFileFromList(msgVec[1], ip, port);
 		if(status == 0){
-			//cout<<"File added successfully at tracker..."<<endl;
 			ack = "File removed successfully from tracker...";
 		}else{
-			//cout<<"unable to add file at tracker..."<<endl;
 			ack = "unable to remove file from tracker...";
 		}
-	} else if(command == "removeseeder"){
-		
+	} 
+	else if(command == "removeseeder"){
+		url = msgVec[1];
+		pos = url.find(":");
+		ip = url.substr(0, pos);
+		int port = stoi(url.substr(pos+1));
+		status = removeSeederFromList(ip, port);
+		if(status == 0){
+			ack = "seeder removed successfully from tracker...";
+		}else{
+			ack = "unable to remove seeder from tracker...";
+		}
 	} else if(command == "getseederlist"){
-		
+		string hash = msgVec[1];
+		if(hash.size() > 40){
+			hash = hash.substr(0,40);
+		}
+		ack = getSeederListForHash(hash);
+		if(ack.empty()){
+			ack = "Unable to get seeder list for the given hash from tracker";
+		}
 	} else {
 		ack = "Invalid command..";
 	}
@@ -208,18 +234,9 @@ void serverChat(int connfd) {
 		message = buff;
 		msgVec = splitLine(message, " ");
 		if(!msgVec.empty()){
-			//call processCommand here
-			//cout<<"msg vec not empty\n";
 			ack = processCommand(msgVec);
 			printDataVec();
 		}
-        // copy server message in the buffer 
-        
-		/*while ((buff[n++] = getchar()) != '\n') 
-		;
-        // and send that buffer to client 
-        write(connfd, buff, sizeof(buff)); */
-		//ack = "received at server\n";
 		bzero(buff, MAX); 
         n = 0; 
 		write(connfd, (char *)ack.c_str(), ack.length()); 
@@ -288,6 +305,21 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	
+	/*
+	vector<string> mv;
+	mv.push_back(argv[5]);
+	mv.push_back(argv[6]);
+	//mv.push_back("getseederlist");
+	//mv.push_back("ac4da3ee5e6b4b0d32556f579522b2c1245b4edf");
+	string list  = processCommand(mv);	//getSeederListForHash("ac4da3ee5e6b4b0d32556f579522b2c1245b4edf");
+	//printDataVec();
+	if(!list.empty()){
+		cout<<"seeder list for given hash is:"<<list<<endl;
+	}else{
+		cout<<"unable to get the seeder list for the given hassh"<<endl;
+	}
+	*/
+	
 	int connection[2];
 	getTCPWriteConnection(connection);
 	int sockfd, connfd;
@@ -295,5 +327,6 @@ int main(int argc, char **argv) {
 	connfd = connection[1];
     serverChat(connfd); 
     close(sockfd);
+	
 	return 0;
 }
